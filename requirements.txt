@@ -1,0 +1,7 @@
+streamlit
+fpdf
+matplotlib
+pandas
+numpy
+cryptography
+requests

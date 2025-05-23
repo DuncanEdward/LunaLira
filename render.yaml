@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: luna-lira
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: streamlit run luna_lira_streamlit_app.py
+    envVars:
+      - key: STREAMLIT_SERVER_HEADLESS
+        value: "true"
