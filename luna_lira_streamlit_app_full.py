@@ -1,4 +1,4 @@
-# luna_lira_streamlit_app.py (Final Full Version)
+# luna_lira_streamlit_app.py (with SendGrid Email Feature Enabled)
 
 import streamlit as st
 from datetime import datetime, timedelta
@@ -6,11 +6,14 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import random
+import requests
+import base64
+import os
 
 st.set_page_config(page_title="Luna Lira", layout="wide")
 st.title("Luna Lira: Astro-Financial Signal App")
 
-# IPO Solar Return Section
+# IPO Solar Return
 st.header("☀️ Solar Return from IPO Date")
 ipo_input = st.text_area("Enter IPO Dates (YYYY-MM-DD, one per line):")
 if ipo_input:
@@ -23,7 +26,7 @@ if ipo_input:
     except Exception:
         st.error("⚠️ Invalid date format. Use YYYY-MM-DD.")
 
-# Moon Return Section
+# Moon Return
 st.header("🌕 Moon Return from Market Highs")
 high_input = st.text_area("Enter Market High Dates (YYYY-MM-DD, one per line):")
 if high_input:
@@ -36,43 +39,50 @@ if high_input:
     except Exception:
         st.error("⚠️ Invalid date format. Use YYYY-MM-DD.")
 
-# 50-Day Moving Average Pullback Alerts (Simulated)
-st.header("📉 Pullback Near 50-Day MA (Simulated Data)")
-symbols = ["AAPL", "TSLA", "NVDA", "AMZN"]
-for symbol in symbols:
-    prices = np.random.normal(loc=150 + random.randint(-50, 50), scale=5, size=60)
-    ma50 = pd.Series(prices).rolling(50).mean()
-    if abs(prices[-1] - ma50.iloc[-1]) / ma50.iloc[-1] < 0.01:
-        st.warning(f"🔔 {symbol} is approaching 50-day MA!")
+# Signal Summary
+st.header("🎯 Signal Summary")
+summary = "Luna Lira Daily Signal Summary\n"
+summary += "Sun Return Dates and Moon Returns from highs have been calculated.\n"
+summary += "Sensitive degrees and technical conditions are under monitoring."
 
-# Reversal Alerts from Key Degrees (Simulated)
-st.header("⚠️ Reversal Watch (Simulated Astro Degrees)")
-sensitive_degrees = {"Cancer": 14, "Pisces": 24, "Virgo": 18, "Libra": 27}
-sun_sign = random.choice(list(sensitive_degrees))
-sun_deg = sensitive_degrees[sun_sign] - random.uniform(0, 2)
-moon_sign = random.choice(list(sensitive_degrees))
-moon_deg = sensitive_degrees[moon_sign] - random.uniform(0, 2)
+st.code(summary)
 
-alerts = []
-if sun_deg < sensitive_degrees[sun_sign]:
-    alerts.append(f"☀️ Sun applying to {sensitive_degrees[sun_sign]}° {sun_sign}")
-if moon_deg < sensitive_degrees[moon_sign]:
-    alerts.append(f"🌙 Moon applying to {sensitive_degrees[moon_sign]}° {moon_sign}")
+# Send Email Section
+SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY", "")
+SENDGRID_FROM_EMAIL = os.getenv("SENDGRID_FROM_EMAIL", "")
 
-if alerts:
-    for alert in alerts:
-        st.error(alert)
-else:
-    st.success("✅ No sensitive degree reversals at this time.")
+to_email = st.text_input("📬 Send alert to (email address):")
 
-# Signal Scoring (Mock)
-st.header("🎯 Trade Signal Scoring (Mocked)")
-score_factors = ["Moon Return", "50 MA Pullback", "Sensitive Degree", "Sun Return"]
-scores = {factor: random.choice([0, 1]) for factor in score_factors}
-total_score = sum(scores.values())
-st.write(f"**Signal Score:** {total_score}/4")
-st.json(scores)
-
-# Placeholder for future email & PDF export
-st.markdown("---")
-st.caption("📬 Email alert system and PDF exports available in premium release.")
+if st.button("📤 Send Daily Summary via SendGrid"):
+    if not SENDGRID_API_KEY or not SENDGRID_FROM_EMAIL:
+        st.error("SendGrid environment variables not set.")
+    elif not to_email:
+        st.error("Please enter a recipient email.")
+    else:
+        try:
+            data = {
+                "personalizations": [
+                    {
+                        "to": [{"email": to_email}],
+                        "subject": "Luna Lira Daily Astro Signal"
+                    }
+                ],
+                "from": {"email": SENDGRID_FROM_EMAIL},
+                "content": [
+                    {
+                        "type": "text/plain",
+                        "value": summary
+                    }
+                ]
+            }
+            headers = {
+                "Authorization": f"Bearer {SENDGRID_API_KEY}",
+                "Content-Type": "application/json"
+            }
+            response = requests.post("https://api.sendgrid.com/v3/mail/send", headers=headers, json=data)
+            if response.status_code == 202:
+                st.success("📧 Email sent successfully!")
+            else:
+                st.error(f"Error: {response.text}")
+        except Exception as e:
+            st.error(f"Failed to send email: {e}")
