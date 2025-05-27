@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 import pandas as pd
 import numpy as np
 import requests
+import os
 
 st.set_page_config(page_title="Luna Lira", layout="wide")
 st.title("Luna Lira: Astro-Financial Signal App")
@@ -33,16 +34,16 @@ if high_input:
     except Exception:
         st.error("⚠️ Invalid date format. Use YYYY-MM-DD.")
 
-# SendGrid Email with st.secrets
-SENDGRID_API_KEY = st.secrets.get("SENDGRID_API_KEY", "")
-SENDGRID_FROM_EMAIL = st.secrets.get("SENDGRID_FROM_EMAIL", "")
+# SendGrid Email with environment variable access
+SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY", "")
+SENDGRID_FROM_EMAIL = os.getenv("SENDGRID_FROM_EMAIL", "")
 
 to_email = st.text_input("📬 Send alert to (email address):")
 summary = "Luna Lira Summary\nSignals generated for Sun and Moon returns."
 
 if st.button("📤 Send Summary via SendGrid"):
     if not SENDGRID_API_KEY or not SENDGRID_FROM_EMAIL:
-        st.error("SendGrid secrets not configured in .streamlit/secrets.toml")
+        st.error("SendGrid environment variables not configured.")
     elif not to_email:
         st.error("Please enter a recipient email.")
     else:
