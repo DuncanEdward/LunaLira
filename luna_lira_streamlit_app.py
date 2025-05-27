@@ -1,14 +1,11 @@
 import streamlit as st
 from datetime import datetime, timedelta
 import pandas as pd
-import numpy as np
-import requests
 import os
 
-# ---- Branding and Layout Styling ----
 st.set_page_config(page_title="Luna Lira", layout="wide")
 
-# Header layout with logo
+# Header with logo
 col1, col2 = st.columns([1, 6])
 with col1:
     st.image("https://raw.githubusercontent.com/DuncanEdward/LunaLiraAssets/main/LunaLiraLogo.png", width=100)
@@ -17,7 +14,44 @@ with col2:
 
 st.markdown("---")
 
-# IPO Solar Return
+# Dynamic Daily Signal
+st.subheader("🔮 Today's Astro Signal Preview")
+
+today = datetime.today()
+mock_ipos = {
+    "AAPL": datetime(1980, 12, 12),
+    "TSLA": datetime(2010, 6, 29),
+    "NVDA": datetime(1999, 1, 22)
+}
+mock_highs = {
+    "AMZN": datetime(2023, 8, 15),
+    "GOOGL": datetime(2022, 12, 5),
+    "MSFT": datetime(2023, 10, 18)
+}
+
+signals_today = []
+
+for stock, ipo_date in mock_ipos.items():
+    for year in range(1, 6):
+        return_date = ipo_date + timedelta(days=365.25 * year)
+        if abs((today - return_date).days) <= 3:
+            signals_today.append(f"☀️ Sun Return for {stock} ({year}y since IPO)")
+
+for stock, high_date in mock_highs.items():
+    for cycle in range(1, 4):
+        return_date = high_date + timedelta(days=27.33 * cycle)
+        if abs((today - return_date).days) <= 2:
+            signals_today.append(f"🌕 Moon Return for {stock} ({cycle} cycles since high)")
+
+if signals_today:
+    for signal in signals_today:
+        st.success(signal)
+else:
+    st.info("No current sun or moon return signals detected.")
+
+st.markdown("---")
+
+# IPO Return Input
 st.subheader("☀️ Solar Return from IPO Date")
 ipo_input = st.text_area("Enter IPO Dates (YYYY-MM-DD, one per line):")
 if ipo_input:
@@ -30,7 +64,7 @@ if ipo_input:
     except Exception:
         st.error("⚠️ Invalid date format. Use YYYY-MM-DD.")
 
-# Moon Return
+# Moon Return Input
 st.subheader("🌕 Moon Return from Market Highs")
 high_input = st.text_area("Enter Market High Dates (YYYY-MM-DD, one per line):")
 if high_input:
@@ -43,7 +77,6 @@ if high_input:
     except Exception:
         st.error("⚠️ Invalid date format. Use YYYY-MM-DD.")
 
-# Footer
 st.markdown("---")
 st.markdown(
     "<div style='text-align:center; font-size:14px; color:gray;'>"
