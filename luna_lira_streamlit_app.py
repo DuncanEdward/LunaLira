@@ -2,6 +2,8 @@ import streamlit as st
 from datetime import datetime, timedelta
 import pandas as pd
 import os
+import numpy as np
+import matplotlib.pyplot as plt
 
 st.set_page_config(page_title="Luna Lira", layout="wide")
 
@@ -41,24 +43,40 @@ mock_highs = {
 
 signals_today = []
 
+def plot_mock_chart(symbol, label, date):
+    dates = pd.date_range(start=date - timedelta(days=30), end=date + timedelta(days=30))
+    prices = np.random.normal(loc=100, scale=3, size=len(dates))
+    fig, ax = plt.subplots()
+    ax.plot(dates, prices, label="Price", linewidth=2)
+    ax.axvline(date, color="red", linestyle="--", label=label)
+    title = f"{symbol} — {label}"
+    ax.set_title(title)
+    ax.set_xlabel("Date")
+    ax.set_ylabel("Price")
+    ax.legend()
+    plt.xticks(rotation=45)
+    st.pyplot(fig)
+
 for stock, ipo_date in mock_ipos.items():
     for year in range(1, 6):
         return_date = ipo_date + timedelta(days=365.25 * year)
         if abs((today - return_date).days) <= 3:
-            signals_today.append(f"☀️ Sun Return for {stock} ({year}y since IPO)")
+            signals_today.append(("☀️ Sun Return", stock, return_date))
 
 for stock, high_date in mock_highs.items():
     for cycle in range(1, 4):
         return_date = high_date + timedelta(days=27.33 * cycle)
         if abs((today - return_date).days) <= 2:
-            signals_today.append(f"🌕 Moon Return for {stock} ({cycle} cycles since high)")
+            signals_today.append(("🌕 Moon Return", stock, return_date))
 
 if signals_today:
-    shown_signals = signals_today if is_premium else signals_today[:1]
-    for signal in shown_signals:
-        st.success(signal)
+    shown = signals_today if is_premium else signals_today[:1]
+    for label, stock, date in shown:
+        st.success(f"{label} for {stock} on {date.strftime('%b %d, %Y')}")
+        if is_premium:
+            plot_mock_chart(stock, label, date)
     if not is_premium and len(signals_today) > 1:
-        st.warning("Upgrade to premium for more signals.")
+        st.warning("Upgrade to premium for more signals and charts.")
 else:
     st.info("No current sun or moon return signals detected.")
 
