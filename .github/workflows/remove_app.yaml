@@ -1,0 +1,16 @@
+# Temporary action to delete a file
+name: Delete File
+on: [push]
+jobs:
+  remove:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Delete file
+        run: |
+          rm luna_lira_streamlit_app.py
+          git config --global user.name "Your Name"
+          git config --global user.email "you@example.com"
+          git add .
+          git commit -m "Remove streamlit app file"
+          git push
