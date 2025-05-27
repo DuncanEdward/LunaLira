@@ -14,6 +14,16 @@ with col2:
 
 st.markdown("---")
 
+# Premium access toggle
+st.sidebar.header("🔐 Access")
+user_code = st.sidebar.text_input("Enter access code to unlock premium features", type="password")
+is_premium = (user_code == "PREMIUM123")
+
+if is_premium:
+    st.sidebar.success("✅ Premium Access Granted")
+else:
+    st.sidebar.info("Free access: showing 1 signal")
+
 # Dynamic Daily Signal
 st.subheader("🔮 Today's Astro Signal Preview")
 
@@ -44,8 +54,11 @@ for stock, high_date in mock_highs.items():
             signals_today.append(f"🌕 Moon Return for {stock} ({cycle} cycles since high)")
 
 if signals_today:
-    for signal in signals_today:
+    shown_signals = signals_today if is_premium else signals_today[:1]
+    for signal in shown_signals:
         st.success(signal)
+    if not is_premium and len(signals_today) > 1:
+        st.warning("Upgrade to premium for more signals.")
 else:
     st.info("No current sun or moon return signals detected.")
 
