@@ -3,8 +3,8 @@ from datetime import datetime, timedelta
 import pandas as pd
 import numpy as np
 import os
-from fpdf import FPDF
 import matplotlib.pyplot as plt
+from fpdf import FPDF
 
 st.set_page_config(page_title="Luna Lira", layout="wide")
 
@@ -42,14 +42,18 @@ def plot_mock_chart(symbol, label, date):
     dates = pd.date_range(start=date - timedelta(days=30), end=date + timedelta(days=30))
     prices = np.random.normal(loc=100, scale=3, size=len(dates))
     fig, ax = plt.subplots()
-    ax.plot(dates, prices, label="Price", linewidth=2)
+    ax.plot(dates, prices, label="Price")
     ax.axvline(date, color="red", linestyle="--", label=label)
     ax.set_title(f"{symbol} — {label}")
     ax.set_xlabel("Date")
     ax.set_ylabel("Price")
     ax.legend()
     plt.xticks(rotation=45)
-    st.pyplot(fig)
+    fig.tight_layout()
+    chart_path = f"/mnt/data/{symbol}_{label.replace(' ', '_')}_chart.png"
+    fig.savefig(chart_path)
+    plt.close(fig)
+    return chart_path
 
 for stock, ipo_date in mock_ipos.items():
     for year in range(1, 6):
@@ -69,15 +73,16 @@ if signals_today:
     for label, stock, date in shown:
         st.success(f"{label} for {stock} on {date.strftime('%b %d, %Y')}")
         if is_premium:
-            plot_mock_chart(stock, label, date)
+            chart_file = plot_mock_chart(stock, label, date)
+            st.image(chart_file, caption=f"{stock} — {label}", use_column_width=True)
     if not is_premium and len(signals_today) > 1:
         st.warning("Upgrade to premium for more signals and charts.")
 else:
     st.info("No current sun or moon return signals detected.")
 
-# PDF Report Section
+# PDF Export with charts
 if is_premium and signals_today:
-    if st.button("📄 Download Today's PDF Report"):
+    if st.button("📄 Download Today's PDF Report (with Charts)"):
         pdf = FPDF()
         pdf.add_page()
         pdf.set_font("Arial", "B", 16)
@@ -91,15 +96,26 @@ if is_premium and signals_today:
         pdf.ln(5)
         pdf.set_font("Arial", "", 11)
         pdf.cell(200, 10, "Today's Signals:", ln=True)
+        chart_paths = []
         for label, stock, date in signals_today:
             pdf.cell(200, 10, f"- {label} for {stock} on {date.strftime('%B %d, %Y')}", ln=True)
+            chart_path = plot_mock_chart(stock, label, date)
+            chart_paths.append((chart_path, f"{stock} — {label}"))
         pdf.ln(10)
         pdf.set_font("Arial", "I", 10)
         pdf.cell(200, 10, "This report was generated automatically by Luna Lira.", ln=True, align="C")
-        report_path = "/mnt/data/luna_lira_report.pdf"
+
+        for chart_path, title in chart_paths:
+            pdf.add_page()
+            pdf.set_font("Arial", "B", 14)
+            safe_title = title.encode("latin-1", "replace").decode("latin-1")
+            pdf.cell(200, 10, safe_title, ln=True, align="C")
+            pdf.image(chart_path, x=10, y=30, w=190)
+
+        report_path = "/mnt/data/luna_lira_report_with_charts.pdf"
         pdf.output(report_path)
         with open(report_path, "rb") as f:
-            st.download_button("📥 Download PDF", f, file_name="luna_lira_report.pdf", mime="application/pdf")
+            st.download_button("📥 Download PDF", f, file_name="luna_lira_report_with_charts.pdf", mime="application/pdf")
 
 st.markdown("---")
 st.markdown(
